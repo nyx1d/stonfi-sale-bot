@@ -1,0 +1,9 @@
+x25519-0.0.2.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+x25519-0.0.2.dist-info/METADATA,sha256=qCWvd2ALknsxc5aN7M_Ofv20iSHlOUXpdGFcIgnXai8,2111
+x25519-0.0.2.dist-info/RECORD,,
+x25519-0.0.2.dist-info/WHEEL,sha256=ewwEueio1C2XeHTvT17n8dZUJgOvyCWCt0WVNLClP9o,92
+x25519-0.0.2.dist-info/top_level.txt,sha256=10PB3HbB0MZSeTPDjey3mASZ7mUP-Oi1hO6rVNojskI,7
+x25519/__init__.py,sha256=FDw4ZGTz8o-6nQRhzE9fk5ITWWelpJ__Fv35DT5OkOM,721
+x25519/__pycache__/__init__.cpython-312.pyc,,
+x25519/__pycache__/djbec.cpython-312.pyc,,
+x25519/djbec.py,sha256=53HTnlNlfqOHFDf8OY_6KL8sxR4swiLsWhUjtw3W3nI,6755

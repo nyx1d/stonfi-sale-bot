@@ -9,7 +9,7 @@ from config import CONNECT_URL, network_config
 import time
 from tonsdk.utils import bytes_to_b64str
 from dedust import Asset, Factory, PoolType, SwapParams, VaultNative, SwapStep
-
+from stonfi import JettonRoot, JettonWallet, RouterV1, PoolV1, pTON_V1, ROUTER_V1_ADDRESS, PTON_V1_ADDRESS, LP_ACCOUNT_V1_ADDRESS
 
 
 async def get_buy_jetton_address(message: types.Message, state: FSMContext):
@@ -46,8 +46,8 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
 ##################################################################################
 
 
-        TON = Asset.native()
-        JETTON = Asset.jetton(data["jetton_address"])
+        TON = PTON_V1_ADDRESS
+        JETTON = JettonWallet(data["jetton_address"])
 
         swap_params = SwapParams(deadline=int(time.time() + 900 * 5),
                                 recipient_address=user_address)
@@ -55,9 +55,8 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
         provider = LiteBalancer.from_config(config=network_config)
         await provider.start_up()
 
-        pool = await Factory.get_pool(pool_type=PoolType.VOLATILE,
-                                    assets=[TON, JETTON],
-                                    provider=provider)
+        
+        pool = await RouterV1.get_pool(self=RouterV1, jetton0=TON, jetton1=JETTON, provider=provider)
         await provider.close_all()
 
 
@@ -67,6 +66,9 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
                                                     pool_address=pool.address,
                                                     swap_params=swap_params,
                                                     _next=_next)
+
+        #swap_body1 = RouterV1._build_swap(offer_amount=int(float(message.text) * 1e9),
+        #                                  poo)
 
         transaction["messages"].append(
             {
