@@ -9,6 +9,8 @@ from config import CONNECT_URL, network_config
 import time
 from tonsdk.utils import bytes_to_b64str
 from dedust import Asset, Factory, PoolType, SwapParams, VaultNative, SwapStep
+from stonfi import Asset, Factory, PoolType, SwapParams, VaultNative, SwapStep
+
 
 async def get_buy_jetton_address(message: types.Message, state: FSMContext):
     await state.update_data(jetton_address=message.text)
@@ -40,6 +42,10 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
         user_address = get_user_address(message.from_user.id)
         data = await state.get_data()
 
+
+##################################################################################
+
+
         TON = Asset.native()
         JETTON = Asset.jetton(data["jetton_address"])
 
@@ -65,6 +71,11 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
                                             assets=[TON, JETTON],
                                             provider=provider)
             await provider.close_all()
+
+
+##################################################################################
+
+
         except:
             await message.answer("Ошибка провайдера! Попробуйте позже",
                                   reply_markup=menu())
