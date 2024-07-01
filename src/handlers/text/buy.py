@@ -9,8 +9,6 @@ from config import CONNECT_URL, network_config
 import time
 from tonsdk.utils import bytes_to_b64str
 from dedust import Asset, Factory, PoolType, SwapParams, VaultNative, SwapStep
-from stonfi import JettonRoot, JettonWallet, RouterV1, PoolV1, pTON_V1, ROUTER_V1_ADDRESS, PTON_V1_ADDRESS, LP_ACCOUNT_V1_ADDRESS
-
 
 async def get_buy_jetton_address(message: types.Message, state: FSMContext):
     await state.update_data(jetton_address=message.text)
@@ -42,37 +40,45 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
         user_address = get_user_address(message.from_user.id)
         data = await state.get_data()
 
-
-##################################################################################
-
-
-        TON = PTON_V1_ADDRESS
-        JETTON = JettonWallet(data["jetton_address"])
+        TON = Asset.native()
+        JETTON = Asset.jetton(data["jetton_address"])
 
         swap_params = SwapParams(deadline=int(time.time() + 900 * 5),
                                 recipient_address=user_address)
         _next = None
         provider = LiteBalancer.from_config(config=network_config)
-        await provider.start_up()
+        try:
+            await provider.start_up()
 
-        
-        pool = await RouterV1.get_pool(self=RouterV1, jetton0=TON, jetton1=JETTON, provider=provider)
-        await provider.close_all()
-
-
-##################################################################################
-
+            if data["routing_address"] != "0":
+                # TON -> ROUTING_ADDRESS -> JETTON_ADDRESS
+                pool = await Factory.get_pool(pool_type=PoolType.VOLATILE,
+                                            assets=[TON, Asset.jetton(data["routing_address"])],
+                                            provider=provider)
+                routing_pool = await Factory.get_pool(pool_type=PoolType.VOLATILE,
+                                            assets=[Asset.jetton(data["routing_address"]), JETTON],
+                                            provider=provider)
+                _next = SwapStep(pool_address=routing_pool.address)
+            else:
+                # TON -> JETTON_ADDRESS
+                pool = await Factory.get_pool(pool_type=PoolType.VOLATILE,
+                                            assets=[TON, JETTON],
+                                            provider=provider)
+            await provider.close_all()
+        except:
+            await message.answer("Ошибка провайдера! Попробуйте позже",
+                                  reply_markup=menu())
+            await state.finish()
+            await provider.close_all()
+            return
         swap_body = VaultNative.create_swap_payload(amount=int(float(message.text) * 1e9),
                                                     pool_address=pool.address,
                                                     swap_params=swap_params,
                                                     _next=_next)
 
-        #swap_body1 = RouterV1._build_swap(offer_amount=int(float(message.text) * 1e9),
-        #                                  poo)
-
         transaction["messages"].append(
             {
-                "address": "EQB3ncyBUTjZUA5EnFKR5_EnOMI9V1tTEAAPaiU71gc4TiUt",
+                "address": "EQDa4VOnTYlLvDJ0gZjNYm5PXfSmmtL6Vs6A_CZEtXCNICq_",
                 "amount": str(int((float(message.text) + 0.25)*1e9)),
                 "payload": bytes_to_b64str(swap_body.to_boc(False))
             }
