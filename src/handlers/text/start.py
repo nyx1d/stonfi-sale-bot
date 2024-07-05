@@ -9,9 +9,9 @@ async def start(message: types.Message):
         return
 
     if not check_user(message.from_user.id):
-        await message.answer(text="Привет! Выбери через что будем коннектить кошелёк",
+        await message.answer(text="Choose your wallet",
                              reply_markup=connect_buttons())
         return
 
-    await message.answer((f"Дарова."),
+    await message.answer((f"Ready to work."),
                           reply_markup=start_menu(), disable_web_page_preview=True)

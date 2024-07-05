@@ -6,23 +6,27 @@ from pytoniq import LiteBalancer
 from keyboards import menu
 from db import get_user_address
 from config import CONNECT_URL, network_config
+import TonTools
+import toncenter
+from pytoniq_core import Address
+import requests
+
 import time
 from tonsdk.utils import bytes_to_b64str
-from dedust import Asset, Factory, PoolType, SwapParams, VaultNative, SwapStep
-from stonfi import JettonRoot, JettonWallet, RouterV1, PoolV1, pTON_V1, ROUTER_V1_ADDRESS, PTON_V1_ADDRESS, LP_ACCOUNT_V1_ADDRESS
-
+from stonfi import RouterV1, PTON_V1_ADDRESS
 
 async def get_buy_jetton_address(message: types.Message, state: FSMContext):
     await state.update_data(jetton_address=message.text)
-    await message.answer("Введите адрес роутинг жетона(0 - если без роутинг адреса)",
-                         reply_markup=menu())
-    await state.set_state("get_buy_routing_address")
+    await message.answer("Routing address - 0, Ton Swap Amount - 0.01 TON")
+    await state.set_state("get_ton_swap_amount")
 
 async def get_buy_routing_address(message: types.Message, state: FSMContext):
-    await state.update_data(routing_address=message.text)
-    await message.answer("Введите сумму обмена(в TON)",
-                         reply_markup=menu())
+    await state.update_data(routing_address=0)
+    await message.answer("Ton Swap Amount - 0.01 TON")
     await state.set_state("get_ton_swap_amount")
+
+async def get_raw_address(userFriendlyAddress):
+    return userFriendlyAddress.to_str(is_user_friendly=False)
 
 async def get_ton_swap_amount(message: types.Message, state: FSMContext):
     storage = FileStorage(f"connections/{message.from_user.id}.json")
@@ -34,6 +38,9 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
             print("Not connected")
             return
 
+        #client = TonCenterClient(api_key)
+        stonfi = RouterV1()
+
         transaction = {
             "valid_until": (int(time.time()) + 900) * 1000,
             "messages": []
@@ -42,50 +49,44 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
         user_address = get_user_address(message.from_user.id)
         data = await state.get_data()
 
-
-##################################################################################
-
-
         TON = PTON_V1_ADDRESS
-        JETTON = JettonWallet(data["jetton_address"])
+        JETTON = data["jetton_address"]
 
-        swap_params = SwapParams(deadline=int(time.time() + 900 * 5),
-                                recipient_address=user_address)
-        _next = None
-        provider = LiteBalancer.from_config(config=network_config)
+        # do check for jetton address sum
+        BASE_URL = 'https://api.ston.fi/v1/pools/' + JETTON
+        response = requests.get(BASE_URL)
+        print(response.json())
+
+        provider = LiteBalancer.from_config(config=network_config, trust_level=2, timeout=15)
         await provider.start_up()
-
+            
+        swap_params = await stonfi.build_swap_ton_to_jetton_tx_params(
+            user_wallet_address=user_address,
+            ask_jetton_address=JETTON,
+            offer_amount=int(float(0.01) * 1e9),
+            min_ask_amount=1,
+            provider=provider,
+            proxy_ton_address=TON
+        )
+            
+        await provider.close_all()        
         
-        pool = await RouterV1.get_pool(self=RouterV1, jetton0=TON, jetton1=JETTON, provider=provider)
-        await provider.close_all()
-
-
-##################################################################################
-
-        swap_body = VaultNative.create_swap_payload(amount=int(float(message.text) * 1e9),
-                                                    pool_address=pool.address,
-                                                    swap_params=swap_params,
-                                                    _next=_next)
-
-        #swap_body1 = RouterV1._build_swap(offer_amount=int(float(message.text) * 1e9),
-        #                                  poo)
-
         transaction["messages"].append(
             {
-                "address": "EQB3ncyBUTjZUA5EnFKR5_EnOMI9V1tTEAAPaiU71gc4TiUt",
-                "amount": str(int((float(message.text) + 0.25)*1e9)),
-                "payload": bytes_to_b64str(swap_body.to_boc(False))
+                "address": str(swap_params['to']),
+                "amount": str(swap_params['amount']),
+                "payload": bytes_to_b64str(swap_params['payload'].to_boc())
             }
         )
 
-        await message.answer("Теперь подтверди транзакцию")
+        await message.answer("Confirm transaction")
 
         await connector.send_transaction(transaction)
-        await message.answer("Успех!",
+        await message.answer("Success!",
                                 reply_markup=menu())
 
     except Exception as e:
-        await message.answer(f"Ошибка: {e}",
+        await message.answer(f"Error: {e}",
                                 reply_markup=menu())
     
     await state.finish()
