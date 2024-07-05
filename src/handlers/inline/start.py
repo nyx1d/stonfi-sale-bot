@@ -18,7 +18,7 @@ async def disconnect(call: types.CallbackQuery):
             os.remove(f"images/{call.from_user.id}.png")
         except:
             pass
-        await call.answer("Удалено!")
+        await call.answer("Wallet deleted")
 
 
 async def tonkeeper_connect(call: types.CallbackQuery):
@@ -44,7 +44,7 @@ async def tonkeeper_connect(call: types.CallbackQuery):
     unsubscribe = connector.on_status_change(status_changed, status_error)
 
     try:
-        url = await connector.connect(connector.get_wallets()[0])
+        url = await connector.connect(connector.get_wallets()[0], request='ton_proof')
     except:
         await connector.disconnect()
         url = await connector.connect(connector.get_wallets()[0])
@@ -52,7 +52,7 @@ async def tonkeeper_connect(call: types.CallbackQuery):
 
     await call.bot.send_photo(call.from_user.id,
                               photo=open(f"images/{call.from_user.id}.png", "rb"),
-                              caption=f"Воспользуйся <a href='{url}'>этой ссылкой</a> для подключения или qr-кодом сверху")
+                              caption=f"Use <a href='{url}'> this URL </a> or QR Code to connect wallet")
 
     address = None
     for i in range(120):
@@ -69,9 +69,9 @@ async def tonkeeper_connect(call: types.CallbackQuery):
         return
 
     add_user(call.from_user.id, address)
-    await call.message.answer(text=f"Подключено!")
+    await call.message.answer(text=f"Wallet connected!")
 
-    await call.message.answer((f"Дарова."),
+    await call.message.answer((f"Ready to work."),
                               reply_markup=start_menu(), disable_web_page_preview=True)
 
 async def tonhub_connect(call: types.CallbackQuery):
@@ -105,7 +105,7 @@ async def tonhub_connect(call: types.CallbackQuery):
 
     await call.bot.send_photo(call.from_user.id,
                               photo=open(f"images/{call.from_user.id}.png", "rb"),
-                              caption=f"Воспользуйся <a href='{url}'>этой ссылкой</a> для подключения или qr-кодом сверху")
+                              caption=f"Use <a href='{url}'> this URL </a> or QR Code to connect")
     os.remove(f"images/{call.from_user.id}.png")
     address = None
     for i in range(120):
@@ -122,7 +122,7 @@ async def tonhub_connect(call: types.CallbackQuery):
         return
 
     add_user(call.from_user.id, address)
-    await call.message.answer(text=f"Подключено!")
+    await call.message.answer(text=f"Connected!")
 
-    await call.message.answer((f"Дарова."),
+    await call.message.answer((f"Ready to work."),
                               reply_markup=start_menu(), disable_web_page_preview=True)

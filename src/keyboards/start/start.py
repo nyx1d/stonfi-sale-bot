@@ -1,13 +1,13 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 def menu():
-    return InlineKeyboardMarkup().add(InlineKeyboardButton(text="Меню", callback_data="menu"))
+    return InlineKeyboardMarkup().add(InlineKeyboardButton(text="Available options", callback_data="menu"))
                                      
 def start_menu():
     keyboard = InlineKeyboardMarkup(row_width=2)
-    buttons = [InlineKeyboardButton(text="🟢 Купить жетон", callback_data="buy_jetton"),
-               InlineKeyboardButton(text="🔴 Продать жетон", callback_data="sell_jetton"),
-               InlineKeyboardButton(text="❌ Отключить кошелёк", callback_data="disconnect")]
+    buttons = [InlineKeyboardButton(text="Buy jetton", callback_data="buy_jetton"),
+               #InlineKeyboardButton(text="Sell jetton", callback_data="sell_jetton"),
+               InlineKeyboardButton(text="Disconnect wallet", callback_data="disconnect")]
 
     keyboard.add(*buttons)
 
