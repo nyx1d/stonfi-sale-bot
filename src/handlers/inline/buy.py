@@ -10,4 +10,4 @@ async def buy_jetton(call: types.CallbackQuery, state: FSMContext):
     
     await call.message.answer("Jetton address to buy:",
                               reply_markup=menu())
-    await state.set_state("get_buy_jetton_address")
+    await state.set_state("get_ton_swap_amount")

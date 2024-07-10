@@ -6,29 +6,16 @@ from pytoniq import LiteBalancer
 from keyboards import menu
 from db import get_user_address
 from config import CONNECT_URL, network_config
-import TonTools
-import toncenter
-from pytoniq_core import Address
-import requests
-
 import time
 from tonsdk.utils import bytes_to_b64str
 from stonfi import RouterV1, PTON_V1_ADDRESS
-
-async def get_buy_jetton_address(message: types.Message, state: FSMContext):
-    await state.update_data(jetton_address=message.text)
-    await message.answer("Routing address - 0, Ton Swap Amount - 0.01 TON")
-    await state.set_state("get_ton_swap_amount")
-
-async def get_buy_routing_address(message: types.Message, state: FSMContext):
-    await state.update_data(routing_address=0)
-    await message.answer("Ton Swap Amount - 0.01 TON")
-    await state.set_state("get_ton_swap_amount")
-
-async def get_raw_address(userFriendlyAddress):
-    return userFriendlyAddress.to_str(is_user_friendly=False)
+import uuid
+                             #Stonfi Ton
 
 async def get_ton_swap_amount(message: types.Message, state: FSMContext):
+    await state.update_data(jetton_address=message.text)
+    await message.answer("Routing address - 0, Ton Swap Amount - 0.01 TON")
+    
     storage = FileStorage(f"connections/{message.from_user.id}.json")
     connector = TonConnect(CONNECT_URL, storage)
 
@@ -38,8 +25,8 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
             print("Not connected")
             return
 
-        #client = TonCenterClient(api_key)
         stonfi = RouterV1()
+        global transactionsSent
 
         transaction = {
             "valid_until": (int(time.time()) + 900) * 1000,
@@ -49,15 +36,21 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
         user_address = get_user_address(message.from_user.id)
         data = await state.get_data()
 
+        
+
         TON = PTON_V1_ADDRESS
         JETTON = data["jetton_address"]
 
-        # do check for jetton address sum
-        BASE_URL = 'https://api.ston.fi/v1/pools/' + JETTON
-        response = requests.get(BASE_URL)
-        print(response.json())
+        #swap_params = SwapParams(deadline=int(time.time() + 900 * 5),
+                                #recipient_address=user_address)
+        
 
+        _next = None
         provider = LiteBalancer.from_config(config=network_config, trust_level=2, timeout=15)
+
+        
+        
+        
         await provider.start_up()
             
         swap_params = await stonfi.build_swap_ton_to_jetton_tx_params(
@@ -69,6 +62,8 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
             proxy_ton_address=TON
         )
             
+        #pool = await stonfi.get_pool(provider=provider, jetton0=TON, jetton1=JETTON)
+            
         await provider.close_all()        
         
         transaction["messages"].append(
@@ -79,14 +74,16 @@ async def get_ton_swap_amount(message: types.Message, state: FSMContext):
             }
         )
 
-        await message.answer("Confirm transaction")
+
+        await message.answer("Transaction sent",
+                                reply_markup=menu())
+        
+        print('Transaction SENT')
 
         await connector.send_transaction(transaction)
-        await message.answer("Success!",
-                                reply_markup=menu())
 
     except Exception as e:
-        await message.answer(f"Error: {e}",
+        await message.answer(f"Ошибка: {e}",
                                 reply_markup=menu())
     
     await state.finish()
