@@ -1,3 +1,4 @@
+from __future__ import annotations
 import asyncio
 import logging
 
@@ -8,6 +9,7 @@ from aiogram.types import BotCommand
 from handlers import register_handlers
 from config import BOT_TOKEN
 from logger import logger
+
 
 logger.setLevel(logging.ERROR)
 
