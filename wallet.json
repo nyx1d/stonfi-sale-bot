@@ -19,19 +19,19 @@
     "platforms": ["ios", "android", "chrome", "firefox"]
   },
   {
-    "app_name": "tonhub",
-    "name": "Tonhub",
-    "image": "https://tonhub.com/tonconnect_logo.png",
-    "about_url": "https://tonhub.com",
-    "universal_url": "https://tonhub.com/ton-connect",
+    "app_name": "mytonwallet",
+    "name": "MyTonWallet",
+    "image": "https://mytonwallet.io/icon-256.png",
+    "about_url": "https://mytonwallet.io",
+    "universal_url": "https://connect.mytonwallet.org",
     "bridge": [
       {
         "type": "js",
-        "key": "tonhub"
+        "key": "mytonwallet"
       },
       {
         "type": "sse",
-        "url": "https://connect.tonhubapi.com/tonconnect"
+        "url": "https://tonconnectbridge.mytonwallet.org/bridge/"
       }
     ],
     "platforms": ["ios", "android"]
